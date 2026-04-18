@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Мои сборы</title>
   <meta name="description" content="Чек-листы для поездок" />
-  <link rel="icon" type="image/png" href="./favicon1.png" />
+  <link rel="icon" type="image/png" href="./favicon.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -580,6 +580,31 @@
       line-height: 1.4;
     }
 
+    .item-actions {
+      display: flex;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .item-edit-btn {
+      flex-shrink: 0;
+      width: 34px;
+      height: 34px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: #f8fafc;
+      color: var(--text);
+      font-size: 16px;
+      line-height: 1;
+      cursor: pointer;
+      transition: .18s ease;
+    }
+
+    .item-edit-btn:hover {
+      transform: translateY(-1px);
+      background: #eef2f6;
+    }
+
     .item-remove-btn {
       flex-shrink: 0;
       width: 34px;
@@ -751,7 +776,7 @@
   <div id="modal" class="modal hidden">
     <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
       <h2 id="modalTitle" class="modal-title">Добавить вещь</h2>
-      <p class="modal-desc">Выбери категорию, напиши название и при желании добавь комментарий.</p>
+      <p id="modalDesc" class="modal-desc">Выбери категорию, напиши название и при желании добавь комментарий.</p>
 
       <div class="form">
         <div class="field">
@@ -772,7 +797,7 @@
 
       <div class="modal-actions">
         <button class="ghost-btn" id="cancelModal">Отмена</button>
-        <button class="primary-btn" id="saveItem">Добавить</button>
+        <button class="primary-btn" id="saveItem">Сохранить</button>
       </div>
 
       <div class="hint">Чек-лист сохраняется локально в браузере, а ещё его можно экспортировать в файл и импортировать обратно.</div>
@@ -780,7 +805,7 @@
   </div>
 
   <script>
-    const STORAGE_KEY = "moi-sbory-gh-pages-v3";
+    const STORAGE_KEY = "moi-sbory-gh-pages-v4";
 
     const CATEGORY_META = {
       docs: { icon: "💳", title: "Документы и деньги" },
@@ -871,7 +896,8 @@
       filter: "active",
       page: "home",
       selectedTripId: "nizhny",
-      modalOpen: false
+      modalOpen: false,
+      editingItem: null
     };
 
     function cloneData(obj) {
@@ -903,10 +929,7 @@
     }
 
     function getCheckedItems(categories) {
-      return categories.reduce(
-        (sum, category) => sum + category.items.filter((item) => item.checked).length,
-        0
-      );
+      return categories.reduce((sum, category) => sum + category.items.filter((item) => item.checked).length, 0);
     }
 
     function progressPercent(checked, total) {
@@ -930,6 +953,7 @@
 
     function renderHome() {
       const trips = filteredTrips();
+
       const cards = trips.length
         ? trips.map((trip) => {
             const total = getTotalItems(trip.categories);
@@ -1004,13 +1028,24 @@
               <div class="item-title">${escapeHtml(item.name)}</div>
               ${item.comment ? `<div class="item-note">${escapeHtml(item.comment)}</div>` : ""}
             </div>
-            <button
-              type="button"
-              class="item-remove-btn"
-              title="Удалить вещь"
-              aria-label="Удалить вещь"
-              data-remove-item="${escapeHtml(category.id)}::${escapeHtml(item.id)}"
-            >×</button>
+
+            <div class="item-actions">
+              <button
+                type="button"
+                class="item-edit-btn"
+                title="Редактировать вещь"
+                aria-label="Редактировать вещь"
+                data-edit-item="${escapeHtml(category.id)}::${escapeHtml(item.id)}"
+              >✎</button>
+
+              <button
+                type="button"
+                class="item-remove-btn"
+                title="Удалить вещь"
+                aria-label="Удалить вещь"
+                data-remove-item="${escapeHtml(category.id)}::${escapeHtml(item.id)}"
+              >×</button>
+            </div>
           </div>
         `).join("");
 
@@ -1104,6 +1139,9 @@
     function renderModal() {
       const modal = document.getElementById("modal");
       const select = document.getElementById("itemCategory");
+      const modalTitle = document.getElementById("modalTitle");
+      const modalDesc = document.getElementById("modalDesc");
+      const saveButton = document.getElementById("saveItem");
 
       if (state.page !== "trip") {
         modal.classList.add("hidden");
@@ -1111,16 +1149,45 @@
       }
 
       const trip = getTripById(state.selectedTripId);
+      if (!trip) return;
+
       select.innerHTML = trip.categories
         .map((category) => `<option value="${escapeHtml(category.id)}">${escapeHtml(category.title)}</option>`)
         .join("");
+
+      if (state.editingItem) {
+        modalTitle.textContent = "Редактировать вещь";
+        modalDesc.textContent = "Можно изменить категорию, название и комментарий.";
+        saveButton.textContent = "Сохранить";
+
+        select.value = state.editingItem.categoryId;
+        document.getElementById("itemName").value = state.editingItem.name || "";
+        document.getElementById("itemComment").value = state.editingItem.comment || "";
+      } else {
+        modalTitle.textContent = "Добавить вещь";
+        modalDesc.textContent = "Выбери категорию, напиши название и при желании добавь комментарий.";
+        saveButton.textContent = "Добавить";
+
+        select.value = trip.categories[0]?.id || "";
+        document.getElementById("itemName").value = "";
+        document.getElementById("itemComment").value = "";
+      }
 
       modal.classList.toggle("hidden", !state.modalOpen);
     }
 
     function setPage(page, tripId) {
       state.page = page;
-      if (tripId) state.selectedTripId = tripId;
+
+      if (tripId) {
+        state.selectedTripId = tripId;
+      }
+
+      if (page === "home") {
+        state.modalOpen = false;
+        state.editingItem = null;
+      }
+
       location.hash = page === "trip" ? `#/trip/${state.selectedTripId}` : "#/";
       render();
     }
@@ -1145,6 +1212,7 @@
 
       document.querySelectorAll("[data-open-modal]").forEach((button) => {
         button.addEventListener("click", () => {
+          state.editingItem = null;
           state.modalOpen = true;
           renderModal();
         });
@@ -1154,6 +1222,13 @@
         checkbox.addEventListener("change", () => {
           const [categoryId, itemId] = checkbox.getAttribute("data-toggle-item").split("::");
           toggleItem(categoryId, itemId);
+        });
+      });
+
+      document.querySelectorAll("[data-edit-item]").forEach((button) => {
+        button.addEventListener("click", () => {
+          const [categoryId, itemId] = button.getAttribute("data-edit-item").split("::");
+          openEditItem(categoryId, itemId);
         });
       });
 
@@ -1201,6 +1276,29 @@
       render();
     }
 
+    function openEditItem(categoryId, itemId) {
+      const trip = getTripById(state.selectedTripId);
+      if (!trip) return;
+
+      const category = trip.categories.find((entry) => entry.id === categoryId);
+      if (!category) return;
+
+      const item = category.items.find((entry) => entry.id === itemId);
+      if (!item) return;
+
+      state.editingItem = {
+        originalCategoryId: categoryId,
+        itemId: item.id,
+        categoryId,
+        name: item.name,
+        comment: item.comment || "",
+        checked: item.checked
+      };
+
+      state.modalOpen = true;
+      renderModal();
+    }
+
     function removeItem(categoryId, itemId) {
       const trip = getTripById(state.selectedTripId);
       if (!trip) return;
@@ -1233,6 +1331,8 @@
       }
 
       state.page = "home";
+      state.modalOpen = false;
+      state.editingItem = null;
     }
 
     function handlePhotoUpload(event) {
@@ -1355,7 +1455,7 @@
       reader.readAsText(file, "utf-8");
     }
 
-    function addItem() {
+    function saveItemFromModal() {
       const trip = getTripById(state.selectedTripId);
       if (!trip) return;
 
@@ -1368,18 +1468,42 @@
         return;
       }
 
-      const category = trip.categories.find((entry) => entry.id === categoryId);
-      if (!category) return;
+      const targetCategory = trip.categories.find((entry) => entry.id === categoryId);
+      if (!targetCategory) return;
 
-      category.items.push({
-        id: `${categoryId}-${Date.now()}`,
-        name,
-        comment,
-        checked: false
-      });
+      if (state.editingItem) {
+        const sourceCategory = trip.categories.find((entry) => entry.id === state.editingItem.originalCategoryId);
+        if (!sourceCategory) return;
+
+        const itemIndex = sourceCategory.items.findIndex((entry) => entry.id === state.editingItem.itemId);
+        if (itemIndex === -1) return;
+
+        const existingItem = sourceCategory.items[itemIndex];
+
+        if (state.editingItem.originalCategoryId === categoryId) {
+          existingItem.name = name;
+          existingItem.comment = comment;
+        } else {
+          sourceCategory.items.splice(itemIndex, 1);
+          targetCategory.items.push({
+            id: existingItem.id,
+            name,
+            comment,
+            checked: existingItem.checked
+          });
+        }
+      } else {
+        targetCategory.items.push({
+          id: `${categoryId}-${Date.now()}`,
+          name,
+          comment,
+          checked: false
+        });
+      }
 
       saveData();
       state.modalOpen = false;
+      state.editingItem = null;
       document.getElementById("itemName").value = "";
       document.getElementById("itemComment").value = "";
       render();
@@ -1394,21 +1518,24 @@
       modal.addEventListener("click", (event) => {
         if (event.target === modal) {
           state.modalOpen = false;
+          state.editingItem = null;
           renderModal();
         }
       });
 
       cancelModal.addEventListener("click", () => {
         state.modalOpen = false;
+        state.editingItem = null;
         renderModal();
       });
 
-      saveItem.addEventListener("click", addItem);
+      saveItem.addEventListener("click", saveItemFromModal);
       importFileInput.addEventListener("change", importTripFile);
 
       document.addEventListener("keydown", (event) => {
         if (event.key === "Escape" && state.modalOpen) {
           state.modalOpen = false;
+          state.editingItem = null;
           renderModal();
         }
       });
