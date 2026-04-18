@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Мои сборы</title>
   <meta name="description" content="Чек-листы для поездок" />
-  <link rel="icon" type="image/png" href="./favicon.png" />
+  <link rel="icon" type="image/png" href="./favicon1.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -406,7 +406,10 @@
     }
 
     .subtle-btn,
-    .add-btn, .ghost-btn, .primary-btn, .danger-btn {
+    .add-btn,
+    .ghost-btn,
+    .primary-btn,
+    .danger-btn {
       border: 0;
       cursor: pointer;
       font-size: 15px;
@@ -414,21 +417,15 @@
       transition: .18s ease;
     }
 
-    .add-btn, .primary-btn {
+    .add-btn,
+    .primary-btn {
       background: var(--accent);
       color: #fff;
       border-radius: 16px;
       padding: 12px 16px;
     }
 
-    .subtle-btn {
-      background: #fff;
-      color: var(--text);
-      border: 1px solid var(--line);
-      border-radius: 16px;
-      padding: 12px 16px;
-    }
-
+    .subtle-btn,
     .ghost-btn {
       background: #fff;
       color: var(--text);
@@ -445,9 +442,17 @@
       padding: 12px 16px;
     }
 
-    .add-btn:hover, .primary-btn:hover, .subtle-btn:hover, .ghost-btn:hover, .danger-btn:hover {
+    .add-btn:hover,
+    .primary-btn:hover,
+    .subtle-btn:hover,
+    .ghost-btn:hover,
+    .danger-btn:hover {
       opacity: .94;
       transform: translateY(-1px);
+    }
+
+    .subtle-btn:hover {
+      box-shadow: var(--shadow);
     }
 
     .categories {
@@ -461,23 +466,6 @@
       display: flex;
       gap: 10px;
       flex-wrap: wrap;
-    }
-
-    .subtle-btn {
-      border: 1px solid var(--line);
-      background: #fff;
-      color: var(--text);
-      border-radius: 16px;
-      padding: 12px 16px;
-      font-size: 15px;
-      font-weight: 700;
-      cursor: pointer;
-      transition: .18s ease;
-    }
-
-    .subtle-btn:hover {
-      transform: translateY(-1px);
-      box-shadow: var(--shadow);
     }
 
     .category {
@@ -569,6 +557,11 @@
       flex-shrink: 0;
     }
 
+    .item-main {
+      flex: 1;
+      min-width: 0;
+    }
+
     .item-title {
       font-size: 16px;
       font-weight: 600;
@@ -585,6 +578,25 @@
       color: var(--muted);
       font-size: 14px;
       line-height: 1.4;
+    }
+
+    .item-remove-btn {
+      flex-shrink: 0;
+      width: 34px;
+      height: 34px;
+      border-radius: 12px;
+      border: 1px solid #f1c9c9;
+      background: #fff6f6;
+      color: #b42318;
+      font-size: 18px;
+      line-height: 1;
+      cursor: pointer;
+      transition: .18s ease;
+    }
+
+    .item-remove-btn:hover {
+      transform: translateY(-1px);
+      background: #ffecec;
     }
 
     .modal.hidden {
@@ -698,7 +710,11 @@
         font-size: 24px;
       }
 
-      .panel, .trip-card, .empty-card, .summary, .modal-card {
+      .panel,
+      .trip-card,
+      .empty-card,
+      .summary,
+      .modal-card {
         border-radius: 24px;
       }
 
@@ -708,12 +724,17 @@
         height: 250px;
       }
 
-      .add-btn, .ghost-btn, .primary-btn, .danger-btn, .subtle-btn {
+      .add-btn,
+      .ghost-btn,
+      .primary-btn,
+      .danger-btn,
+      .subtle-btn {
         width: 100%;
       }
 
       .modal-actions,
-      .toolbar {
+      .toolbar,
+      .list-actions {
         flex-direction: column;
       }
 
@@ -758,10 +779,8 @@
     </div>
   </div>
 
-  <input id="importFileInput" class="hidden-input" type="file" accept=".json,application/json">
-
   <script>
-    const STORAGE_KEY = "moi-sbory-gh-pages-v2";
+    const STORAGE_KEY = "moi-sbory-gh-pages-v3";
 
     const CATEGORY_META = {
       docs: { icon: "💳", title: "Документы и деньги" },
@@ -975,17 +994,24 @@
         const meta = CATEGORY_META[category.id] || { icon: "🧳", title: category.title };
 
         const itemsHtml = category.items.map((item) => `
-          <label class="item ${item.checked ? "checked" : ""}">
+          <div class="item ${item.checked ? "checked" : ""}">
             <input
               type="checkbox"
               ${item.checked ? "checked" : ""}
               data-toggle-item="${escapeHtml(category.id)}::${escapeHtml(item.id)}"
             >
-            <div>
+            <div class="item-main">
               <div class="item-title">${escapeHtml(item.name)}</div>
               ${item.comment ? `<div class="item-note">${escapeHtml(item.comment)}</div>` : ""}
             </div>
-          </label>
+            <button
+              type="button"
+              class="item-remove-btn"
+              title="Удалить вещь"
+              aria-label="Удалить вещь"
+              data-remove-item="${escapeHtml(category.id)}::${escapeHtml(item.id)}"
+            >×</button>
+          </div>
         `).join("");
 
         return `
@@ -1028,8 +1054,6 @@
               <p class="panel-desc">Здесь можно добавить свою фотографию вместо заглушки.</p>
 
               <div class="toolbar">
-                <button class="subtle-btn" id="exportTripData">Экспортировать список</button>
-                <button class="subtle-btn" id="importTripData">Импортировать список</button>
                 ${trip.cover ? `<button class="danger-btn" id="removeTripPhoto">Убрать фотографию</button>` : ""}
               </div>
 
@@ -1061,8 +1085,8 @@
               <div class="categories">${categoriesHtml}</div>
 
               <div class="list-actions">
-                <button class="subtle-btn" id="exportTripData">Экспортировать список</button>
-                <button class="subtle-btn" id="importTripData">Импортировать список</button>
+                <button class="subtle-btn" data-export-trip="1">Экспортировать список</button>
+                <button class="subtle-btn" data-import-trip="1">Импортировать список</button>
               </div>
             </section>
           </section>
@@ -1133,6 +1157,24 @@
         });
       });
 
+      document.querySelectorAll("[data-remove-item]").forEach((button) => {
+        button.addEventListener("click", () => {
+          const [categoryId, itemId] = button.getAttribute("data-remove-item").split("::");
+          removeItem(categoryId, itemId);
+        });
+      });
+
+      document.querySelectorAll("[data-export-trip]").forEach((button) => {
+        button.addEventListener("click", exportTrip);
+      });
+
+      document.querySelectorAll("[data-import-trip]").forEach((button) => {
+        button.addEventListener("click", () => {
+          const importInput = document.getElementById("importFileInput");
+          if (importInput) importInput.click();
+        });
+      });
+
       const tripPhotoInput = document.getElementById("tripPhotoInput");
       if (tripPhotoInput) {
         tripPhotoInput.addEventListener("change", handlePhotoUpload);
@@ -1142,25 +1184,37 @@
       if (removeTripPhoto) {
         removeTripPhoto.addEventListener("click", removePhoto);
       }
-
-      const exportTripData = document.getElementById("exportTripData");
-      if (exportTripData) {
-        exportTripData.addEventListener("click", exportTrip);
-      }
-
-      const importTripData = document.getElementById("importTripData");
-      if (importTripData) {
-        importTripData.addEventListener("click", () => {
-          document.getElementById("importFileInput").click();
-        });
-      }
     }
 
     function toggleItem(categoryId, itemId) {
       const trip = getTripById(state.selectedTripId);
+      if (!trip) return;
+
       const category = trip.categories.find((entry) => entry.id === categoryId);
+      if (!category) return;
+
       const item = category.items.find((entry) => entry.id === itemId);
+      if (!item) return;
+
       item.checked = !item.checked;
+      saveData();
+      render();
+    }
+
+    function removeItem(categoryId, itemId) {
+      const trip = getTripById(state.selectedTripId);
+      if (!trip) return;
+
+      const category = trip.categories.find((entry) => entry.id === categoryId);
+      if (!category) return;
+
+      const item = category.items.find((entry) => entry.id === itemId);
+      if (!item) return;
+
+      const ok = confirm(`Удалить вещь «${item.name}»?`);
+      if (!ok) return;
+
+      category.items = category.items.filter((entry) => entry.id !== itemId);
       saveData();
       render();
     }
@@ -1189,12 +1243,16 @@
       reader.onload = () => {
         compressImage(reader.result, 1400, 0.82).then((result) => {
           const trip = getTripById(state.selectedTripId);
+          if (!trip) return;
+
           trip.cover = result;
+
           try {
             saveData();
           } catch (error) {
             alert("Фото слишком большое для сохранения в браузере. Попробуй более легкое изображение.");
           }
+
           render();
         });
       };
@@ -1203,6 +1261,8 @@
 
     function removePhoto() {
       const trip = getTripById(state.selectedTripId);
+      if (!trip) return;
+
       trip.cover = null;
       saveData();
       render();
@@ -1219,8 +1279,10 @@
           const canvas = document.createElement("canvas");
           canvas.width = width;
           canvas.height = height;
+
           const ctx = canvas.getContext("2d");
           ctx.drawImage(img, 0, 0, width, height);
+
           resolve(canvas.toDataURL("image/jpeg", quality));
         };
         img.src = source;
@@ -1232,25 +1294,26 @@
       if (!trip) return;
 
       const payload = {
-        app: "moi-sbory",
+        type: "moi-sbory-trip",
         version: 1,
         exportedAt: new Date().toISOString(),
         trip
       };
 
-      const blob = new Blob([JSON.stringify(payload, null, 2)], {
-        type: "application/json;charset=utf-8"
-      });
+      const blob = new Blob(
+        [JSON.stringify(payload, null, 2)],
+        { type: "application/json;charset=utf-8" }
+      );
 
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
-      const safeName = (trip.title || "spisok")
+      const safeName = (trip.title || "moi-sbory")
         .toLowerCase()
         .replace(/[^a-zа-я0-9]+/gi, "-")
         .replace(/^-+|-+$/g, "");
 
       link.href = url;
-      link.download = `${safeName || "spisok"}.json`;
+      link.download = `${safeName || "moi-sbory"}.json`;
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -1272,24 +1335,30 @@
           }
 
           const index = state.data.trips.findIndex((trip) => trip.id === state.selectedTripId);
-          if (index === -1) return;
+          if (index === -1) {
+            throw new Error("trip not found");
+          }
 
           state.data.trips[index] = importedTrip;
           state.selectedTripId = importedTrip.id || state.selectedTripId;
           saveData();
+          location.hash = `#/trip/${state.selectedTripId}`;
           render();
-          alert("Список успешно импортирован.");
+          alert("Список импортирован.");
         } catch (error) {
-          alert("Не получилось импортировать файл. Проверь, что это JSON, экспортированный из сайта.");
+          alert("Не получилось импортировать файл. Проверь, что это JSON, экспортированный из «Моих сборов».");
         } finally {
           event.target.value = "";
         }
       };
+
       reader.readAsText(file, "utf-8");
     }
 
     function addItem() {
       const trip = getTripById(state.selectedTripId);
+      if (!trip) return;
+
       const categoryId = document.getElementById("itemCategory").value;
       const name = document.getElementById("itemName").value.trim();
       const comment = document.getElementById("itemComment").value.trim();
@@ -1300,6 +1369,8 @@
       }
 
       const category = trip.categories.find((entry) => entry.id === categoryId);
+      if (!category) return;
+
       category.items.push({
         id: `${categoryId}-${Date.now()}`,
         name,
@@ -1312,60 +1383,6 @@
       document.getElementById("itemName").value = "";
       document.getElementById("itemComment").value = "";
       render();
-    }
-
-    function exportTrip() {
-      const trip = getTripById(state.selectedTripId);
-      const exportData = {
-        exportedAt: new Date().toISOString(),
-        type: "moi-sbory-trip",
-        version: 1,
-        trip
-      };
-
-      const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json;charset=utf-8" });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      const safeTitle = (trip.title || "moi-sbory").toLowerCase().replace(/[^a-zа-я0-9]+/gi, "-").replace(/^-+|-+$/g, "");
-      link.href = url;
-      link.download = `${safeTitle || "moi-sbory"}.json`;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      URL.revokeObjectURL(url);
-    }
-
-    function importTripFile(event) {
-      const file = event.target.files && event.target.files[0];
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = () => {
-        try {
-          const parsed = JSON.parse(reader.result);
-          const importedTrip = parsed && parsed.trip;
-
-          if (!importedTrip || !Array.isArray(importedTrip.categories)) {
-            throw new Error("bad file");
-          }
-
-          const index = state.data.trips.findIndex((trip) => trip.id === state.selectedTripId);
-          if (index === -1) {
-            throw new Error("trip not found");
-          }
-
-          state.data.trips[index] = importedTrip;
-          state.selectedTripId = importedTrip.id || state.selectedTripId;
-          saveData();
-          render();
-          alert("Список импортирован.");
-        } catch (error) {
-          alert("Не получилось импортировать файл. Проверь, что это JSON, экспортированный из \"Моих сборов\".");
-        } finally {
-          event.target.value = "";
-        }
-      };
-      reader.readAsText(file, "utf-8");
     }
 
     function bindModalEvents() {
