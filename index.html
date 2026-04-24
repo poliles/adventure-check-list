@@ -81,7 +81,8 @@
     .categories { margin-top:18px; display:grid; gap:14px; }
     .list-actions { margin-top:18px; }
     .category { background:#f8f9fb; border:1px solid var(--line); border-radius:24px; padding:16px; }
-    .category-head { display:flex; justify-content:space-between; gap:12px; align-items:center; margin-bottom:14px; flex-wrap:wrap; }
+    .category-head { display:flex; justify-content:space-between; gap:12px; align-items:center; margin-bottom:14px; flex-wrap:wrap; cursor:pointer; border-radius:18px; transition:.18s ease; }
+    .category-head:hover { background:#fff; box-shadow:0 8px 18px rgba(16,24,40,.04); }
     .category-left { display:flex; gap:12px; align-items:center; }
     .category-icon { width:44px; height:44px; border-radius:16px; background:#fff; border:1px solid var(--line); display:inline-flex; align-items:center; justify-content:center; font-size:20px; }
     .category-name { font-size:18px; font-weight:800; letter-spacing:-.02em; }
@@ -337,6 +338,7 @@
       itemModalOpen: false,
       tripModalOpen: false,
       editingItem: null,
+      addCategoryId: null,
       importMode: "trip"
     };
 
@@ -570,7 +572,7 @@
 
         return `
           <section class="category">
-            <div class="category-head">
+            <div class="category-head" data-add-to-category="${escapeHtml(category.id)}">
               <div class="category-left">
                 <div class="category-icon">${meta.icon}</div>
                 <div>
@@ -685,7 +687,7 @@
         modalTitle.textContent = "Добавить вещь";
         modalDesc.textContent = "Выбери категорию, напиши название и при желании добавь комментарий.";
         saveButton.textContent = "Добавить";
-        select.value = trip.categories[0]?.id || "";
+        select.value = state.addCategoryId || trip.categories[0]?.id || "";
         document.getElementById("itemName").value = "";
         document.getElementById("itemComment").value = "";
       }
@@ -704,6 +706,7 @@
       if (page === "home") {
         state.itemModalOpen = false;
         state.editingItem = null;
+        state.addCategoryId = null;
       }
 
       location.hash = page === "trip" ? `#/trip/${state.selectedTripId}` : "#/";
@@ -729,6 +732,16 @@
       document.querySelectorAll("[data-open-item-modal]").forEach((button) => {
         button.addEventListener("click", () => {
           state.editingItem = null;
+          state.addCategoryId = null;
+          state.itemModalOpen = true;
+          renderItemModal();
+        });
+      });
+
+      document.querySelectorAll("[data-add-to-category]").forEach((categoryHead) => {
+        categoryHead.addEventListener("click", () => {
+          state.editingItem = null;
+          state.addCategoryId = categoryHead.getAttribute("data-add-to-category");
           state.itemModalOpen = true;
           renderItemModal();
         });
@@ -822,6 +835,7 @@
         checked: item.checked
       };
 
+      state.addCategoryId = null;
       state.itemModalOpen = true;
       renderItemModal();
     }
@@ -860,6 +874,7 @@
       state.page = "home";
       state.itemModalOpen = false;
       state.editingItem = null;
+      state.addCategoryId = null;
     }
 
     function handlePhotoUpload(event) {
@@ -1081,6 +1096,7 @@
       saveData();
       state.itemModalOpen = false;
       state.editingItem = null;
+      state.addCategoryId = null;
       document.getElementById("itemName").value = "";
       document.getElementById("itemComment").value = "";
       render();
@@ -1188,6 +1204,7 @@
       cancelModal.addEventListener("click", () => {
         state.itemModalOpen = false;
         state.editingItem = null;
+        state.addCategoryId = null;
         renderItemModal();
       });
 
@@ -1221,6 +1238,7 @@
       if (state.itemModalOpen) {
         state.itemModalOpen = false;
         state.editingItem = null;
+        state.addCategoryId = null;
         renderItemModal();
       }
 
